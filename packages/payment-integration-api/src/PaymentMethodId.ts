@@ -66,6 +66,7 @@ enum PaymentMethodId {
     WorldpayAccessGooglePay = 'googlepayworldpayaccess',
     Zip = 'zip',
     TdOnlineMartGooglePay = 'googlepaytdonlinemart',
+    DellPayment = "Dell Payment"
 }
 
 export default PaymentMethodId;

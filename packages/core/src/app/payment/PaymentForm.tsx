@@ -124,7 +124,7 @@ const PaymentForm: FunctionComponent<
                     onChange={onStoreCreditChange}
                     usableStoreCredit={usableStoreCredit}
                 />
-            )}
+        )}
 
             <PaymentMethodListFieldset
                 isEmbedded={isEmbedded}
@@ -139,6 +139,64 @@ const PaymentForm: FunctionComponent<
             />
 
             <PaymentRedeemables />
+            <h3>Hi</h3>
+            <div
+                style={{
+                    padding: "20px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "5px",
+                    maxWidth: "500px",
+                    margin: "0 auto",
+                    backgroundColor: "#fff",
+                }}
+            >
+                {/* Radio Button for Dell Payment */}
+                <label
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        fontSize: "16px",
+                        cursor: "pointer",
+                    }}
+                >
+                    <input
+                        type="radio"
+                        name="paymentOption"
+                        value="creditCardDell"
+                        style={{
+                            marginRight: "10px",
+                            width: "18px",
+                            height: "18px",
+                        }}
+                        checked={true} // Preselect the Dell Payment option
+                        onChange={() => {
+                            // Add logic to handle selection
+                        }}
+                    />
+                    <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                        Credit Card - Dell Payments
+                    </span>
+                </label>
+
+                {/* Disabled Button */}
+                <button
+                    style={{
+                        marginTop: "20px",
+                        width: "100%",
+                        padding: "15px",
+                        fontSize: "16px",
+                        fontWeight: "bold",
+                        backgroundColor: "#e0e0e0",
+                        color: "#aaa",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "not-allowed",
+                    }}
+                    disabled
+                >
+                    Place Order
+                </button>
+            </div>
 
             {isTermsConditionsRequired && (
                 <TermsConditions
@@ -167,6 +225,7 @@ const PaymentForm: FunctionComponent<
                     />
                 )}
             </div>
+   
         </Form>
     );
 };

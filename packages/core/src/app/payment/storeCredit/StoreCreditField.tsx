@@ -50,6 +50,7 @@ const StoreCreditField: FunctionComponent<StoreCreditFieldProps & WithCurrencyPr
                 >
                     <a href="#" onClick={preventDefault()}>
                         {currency.toCustomerCurrency(usableStoreCredit)}
+                        <p>Hello</p>
                     </a>
                 </TooltipTrigger>{' '}
                 <TranslatedString id="redeemable.apply_store_credit_after_action" />

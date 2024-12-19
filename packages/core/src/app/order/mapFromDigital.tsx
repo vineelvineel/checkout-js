@@ -10,7 +10,7 @@ function mapFromDigital(item: DigitalItem): OrderSummaryItemProps {
     return {
         id: item.id,
         quantity: item.quantity,
-        amount: item.extendedComparisonPrice,
+        amount: item.extendedListPrice,
         amountAfterDiscount: item.extendedSalePrice,
         name: item.name,
         image: getOrderSummaryItemImage(item),

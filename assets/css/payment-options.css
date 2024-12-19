@@ -1,0 +1,79 @@
+.payment-options {
+    margin-bottom: 2rem;
+}
+
+.payment-method {
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.form-radio {
+    display: flex;
+    align-items: center;
+}
+
+.form-radio-input {
+    margin-right: 1rem;
+}
+
+.form-radio-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+.paymentProviderHeader-name {
+    font-weight: 600;
+}
+
+#payment-form-container {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+}
+
+.form-field {
+    margin-bottom: 15px;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+}
+
+.dell-payment-fields {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.dell-payment-fields .form-field {
+    margin-bottom: 15px;
+}
+
+.dell-payment-fields label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.dell-payment-fields .form-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+} 

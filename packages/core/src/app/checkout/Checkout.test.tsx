@@ -313,8 +313,7 @@ describe('Checkout', () => {
 
             await checkout.waitForBillingStep();
 
-            expect(screen.getByText(/111 Testing Rd/i)).toBeInTheDocument();
-            expect(screen.getByText(/Cityville/i)).toBeInTheDocument();
+            expect(screen.getByText(/new south wales,/i)).toBeInTheDocument();
             expect(screen.getByText(/pickup in store/i)).toBeInTheDocument();
         });
 

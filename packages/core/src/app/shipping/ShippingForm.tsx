@@ -17,6 +17,7 @@ import {
 import React from 'react';
 
 import { withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
+import { usePayPalFastlaneAddress } from '@bigcommerce/checkout/paypal-fastlane-integration';
 
 import MultiShippingForm, { MultiShippingFormValues } from './MultiShippingForm';
 import MultiShippingFormV2 from './MultiShippingFormV2';
@@ -66,43 +67,48 @@ export interface ShippingFormProps {
 }
 
 const ShippingForm = ({
-      addresses,
-      assignItem,
-      cart,
-      cartHasChanged,
-      createCustomerAddress,
-      consignments,
-      countries,
-      countriesWithAutocomplete,
-      onCreateAccount,
-      customerMessage,
-      deinitialize,
-      deleteConsignments,
-      getFields,
-      googleMapsApiKey,
-      initialize,
-      isBillingSameAsShipping,
-      isGuest,
-      isLoading,
-      isMultiShippingMode,
-      methodId,
-      onMultiShippingSubmit,
-      onSignIn,
-      onSingleShippingSubmit,
-      onUnhandledError,
-      onUseNewAddress,
-      shippingAddress,
-      shouldShowOrderComments,
-      shouldShowSaveAddress,
-      signOut,
-      updateAddress,
-      isShippingStepPending,
-      isFloatingLabelEnabled,
-      isInitialValueLoaded,
-      isNewMultiShippingUIEnabled,
-      validateGoogleMapAutoCompleteMaxLength,
-      validateAddressFields,
-  }: ShippingFormProps & WithLanguageProps) => {
+    addresses,
+    assignItem,
+    cart,
+    cartHasChanged,
+    createCustomerAddress,
+    consignments,
+    countries,
+    countriesWithAutocomplete,
+    onCreateAccount,
+    customerMessage,
+    deinitialize,
+    deleteConsignments,
+    getFields,
+    googleMapsApiKey,
+    initialize,
+    isBillingSameAsShipping,
+    isGuest,
+    isLoading,
+    isMultiShippingMode,
+    methodId,
+    onMultiShippingSubmit,
+    onSignIn,
+    onSingleShippingSubmit,
+    onUnhandledError,
+    onUseNewAddress,
+    shippingAddress,
+    shouldShowOrderComments,
+    shouldShowSaveAddress,
+    signOut,
+    updateAddress,
+    isShippingStepPending,
+    isFloatingLabelEnabled,
+    isInitialValueLoaded,
+    isNewMultiShippingUIEnabled,
+    validateGoogleMapAutoCompleteMaxLength,
+    validateAddressFields,
+}: ShippingFormProps & WithLanguageProps) => {
+    const { isPayPalFastlaneEnabled, paypalFastlaneAddresses } = usePayPalFastlaneAddress();
+
+    const shippingAddresses = isPayPalFastlaneEnabled && isGuest
+        ? paypalFastlaneAddresses
+        : addresses;
 
     const getMultiShippingForm = () => {
         if (isGuest) {
@@ -124,7 +130,7 @@ const ShippingForm = ({
         }
 
         return <MultiShippingForm
-            addresses={addresses}
+            addresses={shippingAddresses}
             assignItem={assignItem}
             cart={cart}
             cartHasChanged={cartHasChanged}
@@ -151,7 +157,7 @@ const ShippingForm = ({
         getMultiShippingForm()
     ) : (
         <SingleShippingForm
-            addresses={addresses}
+            addresses={shippingAddresses}
             cartHasChanged={cartHasChanged}
             consignments={consignments}
             countries={countries}
@@ -176,7 +182,7 @@ const ShippingForm = ({
             shouldShowSaveAddress={shouldShowSaveAddress}
             signOut={signOut}
             updateAddress={updateAddress}
-            validateAddressFields={validateAddressFields}
+                validateAddressFields={validateAddressFields}
             validateGoogleMapAutoCompleteMaxLength={validateGoogleMapAutoCompleteMaxLength}
         />
     );

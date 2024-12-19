@@ -89,8 +89,7 @@ const getBillingStepStatus = createSelector(
             ? data.getBillingAddressFields(billingAddress.countryCode)
             : EMPTY_ARRAY;
     },
-    ({ data }: CheckoutSelectors) => data.getConfig(),
-    (checkout, billingAddress, billingAddressFields, config) => {
+    (checkout, billingAddress, billingAddressFields) => {
         const hasAddress = billingAddress
             ? isValidAddress(billingAddress, billingAddressFields)
             : false;
@@ -121,25 +120,6 @@ const getBillingStepStatus = createSelector(
                 isActive: false,
                 isComplete: isAmazonPayBillingStepComplete,
                 isEditable: isAmazonPayBillingStepComplete && hasCustomFields,
-                isRequired: true,
-            };
-        }
-
-        const isGooglePayBillingAddressEditingEnabled = isExperimentEnabled(
-            config?.checkoutSettings,
-            'STRIPE-546.allow_billing_address_editing_for_all_Google_Pay_providers',
-        );
-        const isUsingGooglePay =
-            isGooglePayBillingAddressEditingEnabled && (checkout && checkout.payments
-                ? checkout.payments.some((payment) => (payment?.providerId || '').startsWith('googlepay'))
-                : false);
-
-        if (isUsingGooglePay) {
-            return {
-                type: CheckoutStepType.Billing,
-                isActive: false,
-                isComplete: hasAddress,
-                isEditable: hasAddress,
                 isRequired: true,
             };
         }

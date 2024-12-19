@@ -483,7 +483,7 @@ class Checkout extends Component<
     }
 
     private renderPaymentStep(step: CheckoutStepStatus): ReactNode {
-        const { consignments, cart, errorLogger } = this.props;
+        // const { consignments, cart, errorLogger } = this.props;
 
         return (
             <CheckoutStep
@@ -494,25 +494,66 @@ class Checkout extends Component<
                 onExpanded={this.handleExpanded}
             >
                 <LazyContainer loadingSkeleton={<ChecklistSkeleton />}>
-                    <Payment
-                        checkEmbeddedSupport={this.checkEmbeddedSupport}
-                        errorLogger={errorLogger}
-                        isEmbedded={isEmbedded()}
-                        isUsingMultiShipping={
-                            cart && consignments
-                                ? isUsingMultiShipping(consignments, cart.lineItems)
-                                : false
-                        }
-                        onCartChangedError={this.handleCartChangedError}
-                        onFinalize={this.navigateToOrderConfirmation}
-                        onReady={this.handleReady}
-                        onSubmit={this.navigateToOrderConfirmation}
-                        onSubmitError={this.handleError}
-                        onUnhandledError={this.handleUnhandledError}
-                    />
+                    <div
+                        style={{
+                            padding: "20px",
+                            border: "1px solid #e0e0e0",
+                            borderRadius: "5px",
+                            margin: "-20px auto",
+                            backgroundColor: "#fff",
+                        }}
+                    >
+                        {/* Radio Button for Dell Payment */}
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: "16px",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="radio"
+                                name="paymentOption"
+                                value="creditCardDell"
+                                style={{
+                                    marginRight: "10px",
+                                    width: "18px",
+                                    height: "18px",
+                                }}
+                                checked={true} // Preselect the Dell Payment option
+                                onChange={() => {
+                                    // Add logic to handle selection
+                                }}
+                            />
+                            <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                                Credit Card - Dell Payments
+                            </span>
+                        </label>
+        
+                        {/* Disabled Button */}
+                        <button
+                            style={{
+                                marginTop: "20px",
+                                width: "100%",
+                                padding: "15px",
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                                backgroundColor: "#e0e0e0",
+                                color: "#aaa",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "not-allowed",
+                            }}
+                            disabled
+                        >
+                            Place Order
+                        </button>
+                    </div>
                 </LazyContainer>
             </CheckoutStep>
         );
+        
     }
 
     private renderCartSummary(): ReactNode {

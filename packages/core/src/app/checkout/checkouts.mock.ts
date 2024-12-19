@@ -42,10 +42,10 @@ export function getCheckout(): Checkout {
     };
 }
 
-export function getCheckoutWithPayments(providerId?: string): Checkout {
+export function getCheckoutWithPayments(): Checkout {
     return {
         ...getCheckout(),
-        payments: [getCheckoutPayment(providerId)],
+        payments: [getCheckoutPayment()],
     };
 }
 
@@ -56,9 +56,9 @@ export function getCheckoutWithPromotions(): Checkout {
     };
 }
 
-export function getCheckoutPayment(providerId?: string): CheckoutPayment {
+export function getCheckoutPayment(): CheckoutPayment {
     return {
-        providerId: providerId || 'amazonpay',
+        providerId: 'amazonpay',
         gatewayId: undefined,
         providerType: 'PAYMENT_TYPE_HOSTED',
         detail: {

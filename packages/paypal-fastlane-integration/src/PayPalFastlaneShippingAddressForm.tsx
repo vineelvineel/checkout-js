@@ -7,7 +7,7 @@ import {
     ShippingInitializeOptions,
     ShippingRequestOptions,
 } from '@bigcommerce/checkout-sdk';
-import React, { memo, MutableRefObject } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 
 import { localizeAddress, TranslatedString } from '@bigcommerce/checkout/locale';
 import {
@@ -19,6 +19,7 @@ import {
     LoadingOverlay,
 } from '@bigcommerce/checkout/ui';
 
+import isPayPalCommerceFastlaneMethod from './is-paypal-commerce-fastlane-method';
 import PoweredByPayPalFastlaneLabel from './PoweredByPayPalFastlaneLabel';
 
 export interface PayPalFastlaneStaticAddressProps {
@@ -26,7 +27,6 @@ export interface PayPalFastlaneStaticAddressProps {
     formFields: FormField[];
     isLoading: boolean;
     methodId: string;
-    paypalFastlaneShippingComponentRef: MutableRefObject<PayPalFastlaneAddressComponentRef>;
     deinitialize(options?: ShippingRequestOptions): Promise<CheckoutSelectors>;
     initialize(options?: ShippingInitializeOptions): Promise<CheckoutSelectors>;
     onAddressSelect(address: Address): void;
@@ -42,13 +42,77 @@ export interface PayPalFastlaneAddressComponentRef {
 const PayPalFastlaneShippingAddressForm = (props: PayPalFastlaneStaticAddressProps) => {
     const {
         address: addressWithoutLocalization,
+        methodId,
         formFields,
         isLoading,
+        initialize,
+        deinitialize,
+        onUnhandledError,
         onFieldChange,
         countries,
-        paypalFastlaneShippingComponentRef
     } = props;
     const address = localizeAddress(addressWithoutLocalization, countries);
+
+    const paypalFastlaneShippingComponent = useRef<PayPalFastlaneAddressComponentRef>({});
+
+    const paypalCommerceFastlaneOptions = {
+        paypalcommercefastlane: {
+            onPayPalFastlaneAddressChange: (
+                showPayPalFastlaneAddressSelector: PayPalFastlaneAddressComponentRef['showAddressSelector'],
+            ) => {
+                paypalFastlaneShippingComponent.current.showAddressSelector =
+                    showPayPalFastlaneAddressSelector;
+            },
+        },
+    };
+
+    const braintreeFastlaneOptions = {
+        braintreefastlane: {
+            onPayPalFastlaneAddressChange: (
+                showPayPalFastlaneAddressSelector: PayPalFastlaneAddressComponentRef['showAddressSelector'],
+            ) => {
+                paypalFastlaneShippingComponent.current.showAddressSelector =
+                    showPayPalFastlaneAddressSelector;
+            },
+        },
+    };
+
+    const initializationOptions: ShippingInitializeOptions = isPayPalCommerceFastlaneMethod(
+        methodId,
+    )
+        ? paypalCommerceFastlaneOptions
+        : braintreeFastlaneOptions;
+
+    const initializeShippingStrategyOrThrow = async () => {
+        try {
+            await initialize({
+                methodId,
+                ...initializationOptions,
+            });
+        } catch (error) {
+            if (typeof onUnhandledError === 'function' && error instanceof Error) {
+                onUnhandledError(error);
+            }
+        }
+    };
+
+    const deinitializeShippingStrategyOrThrow = async () => {
+        try {
+            await deinitialize({ methodId });
+        } catch (error) {
+            if (typeof onUnhandledError === 'function' && error instanceof Error) {
+                onUnhandledError(error);
+            }
+        }
+    };
+
+    useEffect(() => {
+        void initializeShippingStrategyOrThrow();
+
+        return () => {
+            void deinitializeShippingStrategyOrThrow();
+        };
+    }, []);
 
     const customFormFields = formFields.filter(({ custom }) => custom);
     const shouldShowCustomFormFields = customFormFields.length > 0;
@@ -57,9 +121,9 @@ const PayPalFastlaneShippingAddressForm = (props: PayPalFastlaneStaticAddressPro
         onFieldChange(name, value);
 
     const handleEditButtonClick = async () => {
-        if (typeof paypalFastlaneShippingComponentRef.current.showAddressSelector === 'function') {
+        if (typeof paypalFastlaneShippingComponent.current.showAddressSelector === 'function') {
             const selectedAddress =
-                await paypalFastlaneShippingComponentRef.current.showAddressSelector();
+                await paypalFastlaneShippingComponent.current.showAddressSelector();
 
             if (selectedAddress) {
                 props.onAddressSelect({

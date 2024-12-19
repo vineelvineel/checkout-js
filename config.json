@@ -1,0 +1,17 @@
+{
+    "name": "Custom Payment Method",
+    "description": "Pay using our custom payment method",
+    "typeId": 2,
+    "enabled": true,
+    "test_mode": true,
+    "supports": {
+        "checkout": true,
+        "payments": true
+    },
+    "config": {
+        "client_id": "YOUR_CLIENT_ID",
+        "client_secret": "YOUR_CLIENT_SECRET",
+        "api_path": "YOUR_API_ENDPOINT",
+        "script_url": "/assets/js/custom-payment.js"
+    }
+} 
