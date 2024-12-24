@@ -37,7 +37,7 @@ import {
     CustomerViewType,
 } from '../customer';
 import { getSupportedMethodIds } from '../customer/getSupportedMethods';
-import { SubscribeSessionStorage } from '../customer/SubscribeSessionStorage';
+// import { SubscribeSessionStorage } from '../customer/SubscribeSessionStorage';
 import { EmbeddedCheckoutStylesheet, isEmbedded } from '../embeddedCheckout';
 import { PromotionBannerList } from '../promotion';
 import { hasSelectedShippingOptions, isUsingMultiShipping, ShippingSummary } from '../shipping';
@@ -50,7 +50,8 @@ import CheckoutStepStatus from './CheckoutStepStatus';
 import CheckoutStepType from './CheckoutStepType';
 import CheckoutSupport from './CheckoutSupport';
 import mapToCheckoutProps from './mapToCheckoutProps';
-import navigateToOrderConfirmation from './navigateToOrderConfirmation';
+// import navigateToOrderConfirmation from './navigateToOrderConfirmation';
+import axios from 'axios';
 
 const Billing = lazy(() =>
     retry(
@@ -78,16 +79,6 @@ const CartSummaryDrawer = lazy(() =>
             import(
                 /* webpackChunkName: "cart-summary-drawer" */
                 '../cart/CartSummaryDrawer'
-            ),
-    ),
-);
-
-const Payment = lazy(() =>
-    retry(
-        () =>
-            import(
-                /* webpackChunkName: "payment" */
-                '../payment/Payment'
             ),
     ),
 );
@@ -483,8 +474,6 @@ class Checkout extends Component<
     }
 
     private renderPaymentStep(step: CheckoutStepStatus): ReactNode {
-        // const { consignments, cart, errorLogger } = this.props;
-
         return (
             <CheckoutStep
                 {...step}
@@ -503,7 +492,6 @@ class Checkout extends Component<
                             backgroundColor: "#fff",
                         }}
                     >
-                        {/* Radio Button for Dell Payment */}
                         <label
                             style={{
                                 display: "flex",
@@ -521,17 +509,13 @@ class Checkout extends Component<
                                     width: "18px",
                                     height: "18px",
                                 }}
-                                checked={true} // Preselect the Dell Payment option
-                                onChange={() => {
-                                    // Add logic to handle selection
-                                }}
+                                checked={true}
                             />
                             <span style={{ fontSize: "16px", fontWeight: "bold" }}>
                                 Credit Card - Dell Payments
                             </span>
                         </label>
         
-                        {/* Disabled Button */}
                         <button
                             style={{
                                 marginTop: "20px",
@@ -539,13 +523,13 @@ class Checkout extends Component<
                                 padding: "15px",
                                 fontSize: "16px",
                                 fontWeight: "bold",
-                                backgroundColor: "#e0e0e0",
-                                color: "#aaa",
+                                backgroundColor: "#007bff", // Change to a clickable color
+                                color: "#fff",
                                 border: "none",
                                 borderRadius: "4px",
-                                cursor: "not-allowed",
+                                cursor: "pointer",
                             }}
-                            disabled
+                            onClick={() => this.logOrderDetailsAndNavigate()}
                         >
                             Place Order
                         </button>
@@ -553,8 +537,277 @@ class Checkout extends Component<
                 </LazyContainer>
             </CheckoutStep>
         );
-        
     }
+
+    // private async logOrderDetailsAndNavigate() {
+    //     const { cart, billingAddress, consignments } = this.props;
+
+    //     if (!cart || !billingAddress || !consignments) {
+    //         console.error("Missing order details");
+    //         return;
+    //     }
+
+    //     // Create a hidden form and submit it
+    //     const form = document.createElement('form');
+    //     form.method = 'POST';
+    //     form.action = 'https://apigtwb2cnp.us.dell.com/GE2/SmartPaymentsApi/v3/Commerce/Payments/PaymentPortal/Initiate';
+    //     form.target = 'dell_payment_frame';
+        
+    //     // Add required headers as hidden fields
+    //     const headers = {
+    //         'SPApiKey': '7f5e43772804422fb15b87a71075f1fb',
+    //         'ApiKey': 'l765c968ca79c94b2e986c78b3a71b0f8b',
+    //         'accept': 'application/json',
+    //         'content-type': 'application/json'
+    //     };
+
+    //     // Add headers as hidden fields
+    //     Object.entries(headers).forEach(([key, value]) => {
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = `_headers_${key}`;
+    //         input.value = value;
+    //         form.appendChild(input);
+    //     });
+
+    //     // Add all the necessary fields
+    //     const payload = {
+    //         address: {
+    //             address1: billingAddress.address1,
+    //             address2: billingAddress.address2 || "",
+    //             address3: "",
+    //             address4: "",
+    //             zipCode: billingAddress.postalCode,
+    //             city: billingAddress.city,
+    //             state: billingAddress.stateOrProvinceCode,
+    //             country: billingAddress.countryCode,
+    //             phoneNumber: billingAddress.phone || ""
+    //         },
+    //         buid: "11",
+    //         country: "US",
+    //         region: "US",
+    //         currency: cart.currency.code,
+    //         successUrl: window.location.origin + "/checkout/order-confirmation",
+    //         cancelUrl: window.location.origin + "/checkout",
+    //         clientSessionId: cart.id,
+    //         orderDescription: `Order for ${billingAddress.firstName} ${billingAddress.lastName}`,
+    //         amount: cart.cartAmount.toString(),
+    //         segment: "dhs",
+    //         language: "EN",
+    //         salesChannel: "US_19",
+    //         companyNumber: "14",
+    //         products: cart.lineItems.physicalItems.map(item => ({
+    //             productDescription: item.name,
+    //             quantity: item.quantity.toString(),
+    //             productAmount: item.extendedListPrice.toString()
+    //         })),
+    //         paymentMode: "Initial",
+    //         orderNumber: `${Date.now()}.11`
+    //     };
+
+    //     // Add payload fields
+    //     Object.entries(payload).forEach(([key, value]) => {
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = key;
+    //         input.value = typeof value === 'string' ? value : JSON.stringify(value);
+    //         form.appendChild(input);
+    //     });
+
+    //     // Create hidden iframe with error handling
+    //     const iframe = document.createElement('iframe');
+    //     iframe.name = 'dell_payment_frame';
+    //     iframe.style.display = 'none';
+        
+    //     // Add error handling for iframe
+    //     iframe.onerror = () => {
+    //         this.handleUnhandledError(new Error('Payment iframe failed to load'));
+    //         cleanup();
+    //     };
+
+    //     // Add message listener for iframe communication
+    //     window.addEventListener('message', (event) => {
+    //         if (event.origin === 'https://apigtwb2cnp.us.dell.com') {
+    //             try {
+    //                 const data = JSON.parse(event.data);
+    //                 if (data.error) {
+    //                     this.handleUnhandledError(new Error(data.error));
+    //                 } else if (data.paymentUrl) {
+    //                     window.location.href = data.paymentUrl;
+    //                 }
+    //             } catch (error) {
+    //                 console.error('Error processing payment response:', error);
+    //             }
+    //             cleanup();
+    //         }
+    //     });
+
+    //     // Cleanup function
+    //     const cleanup = () => {
+    //         setTimeout(() => {
+    //             if (document.body.contains(form)) {
+    //                 document.body.removeChild(form);
+    //             }
+    //             if (document.body.contains(iframe)) {
+    //                 document.body.removeChild(iframe);
+    //             }
+    //         }, 1000);
+    //     };
+
+    //     // Append elements and submit
+    //     document.body.appendChild(iframe);
+    //     document.body.appendChild(form);
+    //     form.submit();
+
+    //     // Set timeout for overall operation
+    //     setTimeout(() => {
+    //         if (!window.location.href.includes('dell.com')) {
+    //             this.handleUnhandledError(new Error('Payment request timed out'));
+    //             cleanup();
+    //         }
+    //     }, 30000); // 30 second timeout
+    // }
+
+    // private async logOrderDetailsAndNavigate() {
+    //     const { cart, billingAddress, consignments } = this.props;
+    
+    //     if (!cart || !billingAddress || !consignments || !consignments.length) {
+    //         console.error("Missing order details");
+    //         return;
+    //     }
+    
+    //     const requestBody = {
+    //         address: {
+    //             address1: billingAddress.address1,
+    //             address2: billingAddress.address2 || "",
+    //             city: billingAddress.city,
+    //             state: billingAddress.stateOrProvinceCode,
+    //             country: billingAddress.countryCode,
+    //             zipCode: billingAddress.postalCode,
+    //             phoneNumber: billingAddress.phone || "N/A", // Default if phone is empty
+    //         },
+    //         buid: "11",
+    //         country: "US",
+    //         region: "US",
+    //         currency: cart.currency.code,
+    //         successUrl: window.location.origin + "/checkout/order-confirmation",
+    //         cancelUrl: window.location.origin + "/checkout",
+    //         clientSessionId: cart.id,
+    //         orderDescription: `Order for ${billingAddress.firstName} ${billingAddress.lastName}`,
+    //         amount: cart.cartAmount.toString(),
+    //         segment: "dhs",
+    //         language: "EN",
+    //         salesChannel: "US_19",
+    //         companyNumber: "14",
+    //         products: cart.lineItems.physicalItems.map(item => ({
+    //             productDescription: item.name,
+    //             quantity: item.quantity.toString(),
+    //             productAmount: item.extendedListPrice.toString()
+    //         })),
+    //         paymentMode: "Initial",
+    //         orderNumber: `${Date.now()}.11`, // Replace with actual order number if available
+    //     };
+    
+    //     try {
+    //         const response = await fetch(
+    //             "https://apigtwb2cnp.us.dell.com/GE2/SmartPaymentsApi/v3/Commerce/Payments/PaymentPortal/Initiate",
+    //             {
+    //                 method: "POST",
+    //                 headers: {
+    //                     accept: "application/json",
+    //                     "content-type": "application/json",
+    //                     SPApiKey: "7f5e43772804422fb15b87a71075f1fb",
+    //                     ApiKey: "l765c968ca79c94b2e986c78b3a71b0f8b",
+    //                 },
+    //                 body: JSON.stringify(requestBody),
+    //             }
+    //         );
+    
+    //         if (response.ok) {
+    //             const data = await response.json();
+    //             console.log("API Response:", data);
+    //             // Redirect to the success page or handle response
+    //             // this.navigateToOrderConfirmation(); // Replace with your navigation method
+    //         } else {
+    //             console.error("API Error:", response.status, await response.text());
+    //         }
+    //     } catch (error) {
+    //         console.error("Network Error:", error);
+    //     }
+    // }
+
+    private async logOrderDetailsAndNavigate() {
+        const { cart, billingAddress, consignments } = this.props;
+    
+        if (!cart || !billingAddress || !consignments || !consignments.length) {
+            console.error("Missing order details");
+            return;
+        }
+    
+        const requestBody = {
+            address: {
+                address1: billingAddress.address1,
+                address2: billingAddress.address2 || "",
+                city: billingAddress.city,
+                state: billingAddress.stateOrProvinceCode,
+                country: billingAddress.countryCode,
+                zipCode: billingAddress.postalCode,
+                phoneNumber: billingAddress.phone || "N/A",
+            },
+            buid: "11",
+            country: "US",
+            region: "US",
+            currency: cart.currency.code,
+            successUrl: window.location.origin + "/checkout/order-confirmation",
+            cancelUrl: window.location.origin + "/checkout",
+            clientSessionId: cart.id,
+            orderDescription: `Order for ${billingAddress.firstName} ${billingAddress.lastName}`,
+            amount: cart.cartAmount.toString(),
+            segment: "dhs",
+            language: "EN",
+            salesChannel: "US_19",
+            companyNumber: "14",
+            products: cart.lineItems.physicalItems.map(item => ({
+                productDescription: item.name,
+                quantity: item.quantity.toString(),
+                productAmount: item.extendedListPrice.toString()
+            })),
+            paymentMode: "Initial",
+            orderNumber: `${Date.now()}.11`,
+        };
+    
+        try {
+            const response = await axios.post(
+                "http://127.0.0.1:3000/api/v1/payments",
+                requestBody
+                // {
+                //     headers: {
+                //         accept: "application/json",
+                //         "content-type": "application/json",
+                //         SPApiKey: "7f5e43772804422fb15b87a71075f1fb",
+                //         ApiKey: "l765c968ca79c94b2e986c78b3a71b0f8b",
+                //     },
+                // }
+            );
+    
+            if (response.data && response.data.redirectUrl) {
+                console.log("Redirecting to payment portal:", response.data.redirectUrl);
+                window.location.href = response.data.redirectUrl;
+            } else {
+                console.error("Unexpected response structure:", response.data);
+            }
+        } catch (error) {
+            // Narrowing the type of `error`
+            // if (axios.isAxiosError(error)) {
+            //     console.error("API Error:", error.response?.status, error.response?.data);
+            // } else if (error instanceof Error) {
+            //     console.error("Error:", error.message);
+            // } else {
+            //     console.error("Unexpected error:", error);
+            // }
+        }
+    }
+    
 
     private renderCartSummary(): ReactNode {
         const { isMultiShippingMode } = this.state;
@@ -634,21 +887,21 @@ class Checkout extends Component<
         this.navigateToStep(activeStep.type, options);
     };
 
-    private navigateToOrderConfirmation: (orderId?: number) => void = (orderId) => {
-        const { steps, analyticsTracker } = this.props;
+    // private navigateToOrderConfirmation: (orderId?: number) => void = (orderId) => {
+    //     const { steps, analyticsTracker } = this.props;
 
-        analyticsTracker.trackStepCompleted(steps[steps.length - 1].type);
+    //     analyticsTracker.trackStepCompleted(steps[steps.length - 1].type);
 
-        if (this.embeddedMessenger) {
-            this.embeddedMessenger.postComplete();
-        }
+    //     if (this.embeddedMessenger) {
+    //         this.embeddedMessenger.postComplete();
+    //     }
 
-        SubscribeSessionStorage.removeSubscribeStatus();
+    //     SubscribeSessionStorage.removeSubscribeStatus();
 
-        this.setState({ isRedirecting: true }, () => {
-            navigateToOrderConfirmation(orderId);
-        });
-    };
+    //     this.setState({ isRedirecting: true }, () => {
+    //         navigateToOrderConfirmation(orderId);
+    //     });
+    // };
 
     private checkEmbeddedSupport: (methodIds: string[]) => boolean = (methodIds) => {
         const { embeddedSupport } = this.props;
@@ -711,6 +964,11 @@ class Checkout extends Component<
 
     private handleError: (error: Error) => void = (error) => {
         const { errorLogger } = this.props;
+
+        if (error instanceof CartChangedError) {
+            this.handleCartChangedError(error);
+            return;
+        }
 
         errorLogger.log(error);
 
