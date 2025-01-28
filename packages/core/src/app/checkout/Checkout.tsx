@@ -11,7 +11,7 @@ import {
     FlashMessage,
     PaymentMethod,
     Promotion,
- RequestOptions } from '@bigcommerce/checkout-sdk';
+    RequestOptions } from '@bigcommerce/checkout-sdk';
 import classNames from 'classnames';
 import { find, findIndex } from 'lodash';
 import React, { Component, lazy, ReactNode } from 'react';
@@ -37,7 +37,7 @@ import {
     CustomerViewType,
 } from '../customer';
 import { getSupportedMethodIds } from '../customer/getSupportedMethods';
-import { SubscribeSessionStorage } from '../customer/SubscribeSessionStorage';
+// import { SubscribeSessionStorage } from '../customer/SubscribeSessionStorage';
 import { EmbeddedCheckoutStylesheet, isEmbedded } from '../embeddedCheckout';
 import { PromotionBannerList } from '../promotion';
 import { hasSelectedShippingOptions, isUsingMultiShipping, ShippingSummary } from '../shipping';
@@ -50,7 +50,12 @@ import CheckoutStepStatus from './CheckoutStepStatus';
 import CheckoutStepType from './CheckoutStepType';
 import CheckoutSupport from './CheckoutSupport';
 import mapToCheckoutProps from './mapToCheckoutProps';
-import navigateToOrderConfirmation from './navigateToOrderConfirmation';
+// import navigateToOrderConfirmation from './navigateToOrderConfirmation';
+import axios from 'axios';
+
+interface AddressWithEmail extends Address {
+    email: string;
+}
 
 const Billing = lazy(() =>
     retry(
@@ -78,16 +83,6 @@ const CartSummaryDrawer = lazy(() =>
             import(
                 /* webpackChunkName: "cart-summary-drawer" */
                 '../cart/CartSummaryDrawer'
-            ),
-    ),
-);
-
-const Payment = lazy(() =>
-    retry(
-        () =>
-            import(
-                /* webpackChunkName: "payment" */
-                '../payment/Payment'
             ),
     ),
 );
@@ -148,6 +143,7 @@ export interface WithCheckoutProps {
     loadCheckout(id: string, options?: RequestOptions<CheckoutParams>): Promise<CheckoutSelectors>;
     loadPaymentMethodByIds(methodIds: string[]): Promise<CheckoutSelectors>;
     subscribeToConsignments(subscriber: (state: CheckoutSelectors) => void): () => void;
+    // userId?: string;
 }
 
 class Checkout extends Component<
@@ -483,8 +479,6 @@ class Checkout extends Component<
     }
 
     private renderPaymentStep(step: CheckoutStepStatus): ReactNode {
-        const { consignments, cart, errorLogger } = this.props;
-
         return (
             <CheckoutStep
                 {...step}
@@ -494,26 +488,177 @@ class Checkout extends Component<
                 onExpanded={this.handleExpanded}
             >
                 <LazyContainer loadingSkeleton={<ChecklistSkeleton />}>
-                    <Payment
-                        checkEmbeddedSupport={this.checkEmbeddedSupport}
-                        errorLogger={errorLogger}
-                        isEmbedded={isEmbedded()}
-                        isUsingMultiShipping={
-                            cart && consignments
-                                ? isUsingMultiShipping(consignments, cart.lineItems)
-                                : false
-                        }
-                        onCartChangedError={this.handleCartChangedError}
-                        onFinalize={this.navigateToOrderConfirmation}
-                        onReady={this.handleReady}
-                        onSubmit={this.navigateToOrderConfirmation}
-                        onSubmitError={this.handleError}
-                        onUnhandledError={this.handleUnhandledError}
-                    />
+                    <div
+                        style={{
+                            padding: "20px",
+                            border: "1px solid #e0e0e0",
+                            borderRadius: "5px",
+                            margin: "-20px auto",
+                            backgroundColor: "#fff",
+                        }}
+                    >
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: "16px",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="radio"
+                                name="paymentOption"
+                                value="creditCardDell"
+                                style={{
+                                    marginRight: "10px",
+                                    width: "18px",
+                                    height: "18px",
+                                }}
+                                checked={true}
+                            />
+                            <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                                Credit Card - Dell Payments
+                            </span>
+                        </label>
+        
+                        <button
+                            style={{
+                                marginTop: "20px",
+                                width: "100%",
+                                padding: "15px",
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                                backgroundColor: "#007bff", // Change to a clickable color
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                            }}
+                            onClick={() => this.logOrderDetailsAndNavigate()}
+                        >
+                            Place Order
+                        </button>
+                    </div>
                 </LazyContainer>
             </CheckoutStep>
         );
     }
+
+    private async logOrderDetailsAndNavigate() {
+        const { cart, billingAddress, consignments } = this.props;
+
+        if (!cart || !billingAddress || !consignments || !consignments.length) {
+            console.error("Missing order details");
+            return;
+        }
+
+        const requestBody = {
+            address: {
+                address1: billingAddress.address1,
+                address2: billingAddress.address2 || "",
+                city: billingAddress.city,
+                state: billingAddress.stateOrProvinceCode,
+                country: billingAddress.countryCode,
+                zipCode: billingAddress.postalCode,
+                phoneNumber: billingAddress.phone || "N/A",
+                email: (billingAddress as AddressWithEmail).email || "N/A",
+            },
+            buid: "11",
+            country: "US",
+            region: "US",
+            currency: cart.currency.code,
+            successUrl: "http://127.0.0.1:3000?custom_id=" + cart.customerId,
+            cancelUrl: window.location.origin + "/checkout",
+            clientSessionId: cart.id,
+            orderDescription: `Order for ${billingAddress.firstName} ${billingAddress.lastName}`,
+            amount: cart.cartAmount.toString(),
+            segment: "dhs",
+            language: "EN",
+            salesChannel: "US_19",
+            companyNumber: "14",
+            products: cart.lineItems.physicalItems.map(item => ({
+                productDescription: item.name,
+                quantity: item.quantity.toString(),
+                productAmount: item.extendedListPrice.toString()
+            })),
+            paymentMode: "Initial",
+            orderNumber: `${Date.now()}.11`,
+        };
+
+        try {
+            const response = await axios.post(
+                "http://127.0.0.1:3000/api/v1/payments",
+                requestBody
+            );
+
+            if (response.data && response.data.redirectUrl) {
+                // Clear cart using the new endpoint
+                try {
+                    await axios.post("http://127.0.0.1:3000/api/v1/clear_cart", {
+                        cartId: cart.id,
+                        items: cart.lineItems.physicalItems.map(item => ({
+                            itemId: item.id
+                        }))
+                    });
+                    console.log("Successfully cleared cart");
+                } catch (clearCartError) {
+                    console.error("Error clearing cart:", clearCartError);
+                    // Continue with redirect even if cart clearing fails
+                }
+
+                console.log("Redirecting to payment portal:", response.data.redirectUrl);
+                window.location.href = response.data.redirectUrl;
+            } else {
+                console.error("Unexpected response structure:", response.data);
+            }
+
+            // Existing order creation logic
+            const orderResponse = await axios.post(
+                "http://127.0.0.1:3000/api/v1/order_confrimation",
+                {
+                    status_id: 1,
+                    customer_id: cart.customerId || 0,
+                    billing_address: {
+                        first_name: billingAddress.firstName,
+                        last_name: billingAddress.lastName,
+                        street_1: billingAddress.address1,
+                        city: billingAddress.city,
+                        state: billingAddress.stateOrProvinceCode,
+                        zip: billingAddress.postalCode,
+                        country: "United States",
+                        country_iso2: "US",
+                        email: (billingAddress as AddressWithEmail).email
+                    },
+                    shipping_addresses: [{
+                        first_name: billingAddress.firstName,
+                        last_name: billingAddress.lastName,
+                        company: (billingAddress as any).company || '',
+                        street_1: billingAddress.address1,
+                        city: billingAddress.city,
+                        state: billingAddress.stateOrProvinceCode,
+                        zip: billingAddress.postalCode,
+                        country: "United States",
+                        country_iso2: "US",
+                        email: (billingAddress as AddressWithEmail).email
+                    }],
+                    products: cart.lineItems.physicalItems.map(item => ({
+                        product_id: item.productId,
+                        quantity: item.quantity,
+                        product_options: []
+                    }))
+                }
+            );
+
+            if (orderResponse.status === 201) {
+                console.log("Order created successfully:", orderResponse.data);
+            } else {
+                console.error("Failed to create order:", orderResponse.status, orderResponse.data);
+            }
+        } catch (error) {
+            console.error("Error during payment, order creation, or cart clearing:", error);
+        }
+    }
+    
 
     private renderCartSummary(): ReactNode {
         const { isMultiShippingMode } = this.state;
@@ -593,21 +738,21 @@ class Checkout extends Component<
         this.navigateToStep(activeStep.type, options);
     };
 
-    private navigateToOrderConfirmation: (orderId?: number) => void = (orderId) => {
-        const { steps, analyticsTracker } = this.props;
+    // private navigateToOrderConfirmation: (orderId?: number) => void = (orderId) => {
+    //     const { steps, analyticsTracker } = this.props;
 
-        analyticsTracker.trackStepCompleted(steps[steps.length - 1].type);
+    //     analyticsTracker.trackStepCompleted(steps[steps.length - 1].type);
 
-        if (this.embeddedMessenger) {
-            this.embeddedMessenger.postComplete();
-        }
+    //     if (this.embeddedMessenger) {
+    //         this.embeddedMessenger.postComplete();
+    //     }
 
-        SubscribeSessionStorage.removeSubscribeStatus();
+    //     SubscribeSessionStorage.removeSubscribeStatus();
 
-        this.setState({ isRedirecting: true }, () => {
-            navigateToOrderConfirmation(orderId);
-        });
-    };
+    //     this.setState({ isRedirecting: true }, () => {
+    //         navigateToOrderConfirmation(orderId);
+    //     });
+    // };
 
     private checkEmbeddedSupport: (methodIds: string[]) => boolean = (methodIds) => {
         const { embeddedSupport } = this.props;
@@ -670,6 +815,11 @@ class Checkout extends Component<
 
     private handleError: (error: Error) => void = (error) => {
         const { errorLogger } = this.props;
+
+        if (error instanceof CartChangedError) {
+            this.handleCartChangedError(error);
+            return;
+        }
 
         errorLogger.log(error);
 
